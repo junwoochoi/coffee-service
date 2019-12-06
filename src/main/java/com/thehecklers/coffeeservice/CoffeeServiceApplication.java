@@ -7,10 +7,17 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
 import java.beans.ConstructorProperties;
+import java.time.Duration;
 import java.time.Instant;
 
 @SpringBootApplication
@@ -20,6 +27,48 @@ public class CoffeeServiceApplication {
         SpringApplication.run(CoffeeServiceApplication.class, args);
     }
 
+}
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/coffees")
+class CoffeeController {
+    private final CoffeeService coffeeService;
+
+    @GetMapping
+    Flux<Coffee> all() {
+        return coffeeService.getAllCoffee();
+    }
+
+    @GetMapping("/{id}")
+    Mono<Coffee> byId(@PathVariable String id) {
+        return coffeeService.getCoffeeById(id);
+    }
+
+    @GetMapping("/{id}/orders")
+    Flux<CoffeeOrder> orders(@PathVariable String id) {
+        return coffeeService.getOrdersForCoffee(id);
+    }
+}
+
+@Service
+@RequiredArgsConstructor
+class CoffeeService {
+    private final CoffeeRepository coffeeRepository;
+
+    Flux<Coffee> getAllCoffee() {
+        return coffeeRepository.findAll();
+    }
+
+    Mono<Coffee> getCoffeeById(String id) {
+        return coffeeRepository.findById(id);
+    }
+
+    Flux<CoffeeOrder> getOrdersForCoffee(String coffeeId) {
+        return Flux.interval(Duration.ofSeconds(1))
+                .onBackpressureDrop()
+                .map(aLong -> new CoffeeOrder(coffeeId, Instant.now()));
+    }
 }
 
 @Component
