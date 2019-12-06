@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -40,6 +41,14 @@ class RSController {
     Flux<Coffee> supplyCoffees() {
         return coffeeService.getAllCoffees();
     }
+
+    @MessageMapping("orders.{name}")
+    Flux<CoffeeOrder> orders(@DestinationVariable String name) {
+        System.out.println("hey im alive");
+        return coffeeService.getCoffeeByName(name)
+                .flatMapMany(coffee -> coffeeService.getOrdersForCoffee(coffee.getName()));
+    }
+
 }
 
 @RestController
@@ -77,6 +86,11 @@ class CoffeeService {
         return coffeeRepository.findById(id);
     }
 
+    Mono<Coffee> getCoffeeByName(String name) {
+        return coffeeRepository.findByName(name)
+                .defaultIfEmpty(new Coffee("123456", "My Favorite Coffee"));
+    }
+
     Flux<CoffeeOrder> getOrdersForCoffee(String coffeeId) {
         return Flux.interval(Duration.ofSeconds(1))
                 .onBackpressureDrop()
@@ -102,7 +116,7 @@ class DataLoader {
 }
 
 interface CoffeeRepository extends ReactiveCrudRepository<Coffee, String> {
-
+    Mono<Coffee> findByName(String name);
 }
 
 @Data
@@ -116,6 +130,7 @@ class CoffeeOrder {
 @Document
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @RequiredArgsConstructor
 class Coffee {
     @Id
