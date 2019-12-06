@@ -7,7 +7,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +19,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
-import java.awt.*;
-import java.beans.ConstructorProperties;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -31,6 +31,17 @@ public class CoffeeServiceApplication {
 
 }
 
+@Controller
+@RequiredArgsConstructor
+class RSController {
+    private final CoffeeService coffeeService;
+
+    @MessageMapping("coffees")
+    Flux<Coffee> supplyCoffees() {
+        return coffeeService.getAllCoffees();
+    }
+}
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/coffees")
@@ -39,7 +50,7 @@ class CoffeeController {
 
     @GetMapping
     Flux<Coffee> all() {
-        return coffeeService.getAllCoffee();
+        return coffeeService.getAllCoffees();
     }
 
     @GetMapping("/{id}")
@@ -58,7 +69,7 @@ class CoffeeController {
 class CoffeeService {
     private final CoffeeRepository coffeeRepository;
 
-    Flux<Coffee> getAllCoffee() {
+    Flux<Coffee> getAllCoffees() {
         return coffeeRepository.findAll();
     }
 
