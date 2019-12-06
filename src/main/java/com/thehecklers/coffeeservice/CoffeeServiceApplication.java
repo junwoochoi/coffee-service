@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.PostConstruct;
+import java.awt.*;
 import java.beans.ConstructorProperties;
 import java.time.Duration;
 import java.time.Instant;
@@ -45,7 +47,7 @@ class CoffeeController {
         return coffeeService.getCoffeeById(id);
     }
 
-    @GetMapping("/{id}/orders")
+    @GetMapping(value = "/{id}/orders", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     Flux<CoffeeOrder> orders(@PathVariable String id) {
         return coffeeService.getOrdersForCoffee(id);
     }
